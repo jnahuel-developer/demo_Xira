@@ -1,39 +1,23 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { agendaMock, type AgendaAppointment, type AgendaAppointmentStatus } from "../mocks/agenda.mock";
+import {
+  agendaDateKeys,
+  getAgendaDay,
+  mockNow,
+  type AgendaAppointment,
+  type AgendaAppointmentStatus,
+} from "../mocks/agenda.mock";
 
-type AgendaDayView = {
-  id: string;
-  label: string;
-  helper: string;
-};
+function timeToMinutes(time: string) {
+  const [hour, minute] = time.split(":").map(Number);
+  return hour * 60 + minute;
+}
 
-const agendaDayViews: AgendaDayView[] = [
-  {
-    id: "previous",
-    label: "Lunes 13 de mayo",
-    helper: "Ayer",
-  },
-  {
-    id: "current",
-    label: agendaMock.dateLabel,
-    helper: "Hoy",
-  },
-  {
-    id: "next",
-    label: "Miércoles 15 de mayo",
-    helper: "Mañana",
-  },
-];
-
-const currentDayIndex = 1;
-
-const sortedAppointments = [...agendaMock.appointments].sort((left, right) => {
-  const [leftHour, leftMinute] = left.time.split(":").map(Number);
-  const [rightHour, rightMinute] = right.time.split(":").map(Number);
-
-  return leftHour * 60 + leftMinute - (rightHour * 60 + rightMinute);
-});
+function sortAppointments(appointments: AgendaAppointment[]) {
+  return [...appointments].sort((left, right) => {
+    return timeToMinutes(left.time) - timeToMinutes(right.time);
+  });
+}
 
 function statusClass(status: AgendaAppointmentStatus) {
   switch (status) {
@@ -54,102 +38,129 @@ function statusClass(status: AgendaAppointmentStatus) {
   }
 }
 
-function statusPriority(status: AgendaAppointmentStatus) {
-  switch (status) {
-    case "En curso":
-      return 0;
-    case "Esperando":
-      return 1;
-    case "Próximo":
-      return 2;
-    case "Confirmado":
-      return 3;
-    case "Pendiente":
-      return 4;
-    case "Reprogramado":
-      return 5;
-    default:
-      return 10;
-  }
-}
-
-function pickPriorityAppointment(appointments: AgendaAppointment[]) {
-  return [...appointments].sort((left, right) => {
-    const priorityDiff = statusPriority(left.status) - statusPriority(right.status);
-
-    if (priorityDiff !== 0) {
-      return priorityDiff;
-    }
-
-    const [leftHour, leftMinute] = left.time.split(":").map(Number);
-    const [rightHour, rightMinute] = right.time.split(":").map(Number);
-
-    return leftHour * 60 + leftMinute - (rightHour * 60 + rightMinute);
-  })[0];
-}
-
-function collapsedWindow(
+function findNextAvailableAppointment(
   appointments: AgendaAppointment[],
-  anchorId: string,
-  windowSize: number
+  nowTime: string
 ) {
-  const anchorIndex = appointments.findIndex((item) => item.id === anchorId);
-  const safeAnchorIndex = anchorIndex >= 0 ? anchorIndex : 0;
-  const start = Math.max(
-    0,
-    Math.min(safeAnchorIndex, Math.max(appointments.length - windowSize, 0))
-  );
+  const nowMinutes = timeToMinutes(nowTime);
+  return appointments.find((item) => timeToMinutes(item.time) >= nowMinutes);
+}
 
-  return appointments.slice(start, start + windowSize);
+function getDefaultSelectedId(
+  appointments: AgendaAppointment[],
+  selectedDate: string
+) {
+  if (!appointments.length) {
+    return "";
+  }
+
+  if (selectedDate === agendaDateKeys.today) {
+    return (
+      findNextAvailableAppointment(appointments, mockNow)?.id ?? appointments[0].id
+    );
+  }
+
+  return appointments[0].id;
+}
+
+function getCollapsedAppointments(
+  appointments: AgendaAppointment[],
+  selectedDate: string
+) {
+  if (appointments.length <= 3) {
+    return appointments;
+  }
+
+  if (selectedDate !== agendaDateKeys.today) {
+    return appointments.slice(0, 3);
+  }
+
+  const nextAvailable = findNextAvailableAppointment(appointments, mockNow);
+  const anchorIndex = nextAvailable
+    ? appointments.findIndex((item) => item.id === nextAvailable.id)
+    : 0;
+
+  return appointments.slice(anchorIndex >= 0 ? anchorIndex : 0, anchorIndex + 3);
 }
 
 export default function AgendaPage() {
   const navigate = useNavigate();
-  const priorityAppointment = pickPriorityAppointment(sortedAppointments);
-  const [selectedId, setSelectedId] = useState<string>(
-    priorityAppointment?.id ?? sortedAppointments[0]?.id ?? ""
-  );
-  const [activeDayIndex, setActiveDayIndex] = useState<number>(currentDayIndex);
+  const [selectedDate, setSelectedDate] = useState<string>(agendaDateKeys.today);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [draftDate, setDraftDate] = useState<string>(agendaDateKeys.today);
 
-  const activeDay = agendaDayViews[activeDayIndex];
+  const activeDay = useMemo(() => getAgendaDay(selectedDate), [selectedDate]);
+  const sortedAppointments = useMemo(
+    () => sortAppointments(activeDay.appointments),
+    [activeDay]
+  );
+  const [selectedId, setSelectedId] = useState(() =>
+    getDefaultSelectedId(
+      sortAppointments(getAgendaDay(agendaDateKeys.today).appointments),
+      agendaDateKeys.today
+    )
+  );
+
+  const todayAppointments = useMemo(
+    () => sortAppointments(getAgendaDay(agendaDateKeys.today).appointments),
+    []
+  );
+  const nextAvailableToday = useMemo(
+    () => findNextAvailableAppointment(todayAppointments, mockNow),
+    [todayAppointments]
+  );
+  const isTodaySelected = selectedDate === agendaDateKeys.today;
 
   const selected = useMemo(() => {
     return (
-      sortedAppointments.find((item) => item.id === selectedId) ??
-      priorityAppointment ??
-      sortedAppointments[0]
+      sortedAppointments.find((item) => item.id === selectedId) ?? sortedAppointments[0]
     );
-  }, [selectedId, priorityAppointment]);
+  }, [selectedId, sortedAppointments]);
 
   const visibleAppointments = useMemo(() => {
     if (isExpanded) {
       return sortedAppointments;
     }
 
-    return collapsedWindow(
-      sortedAppointments,
-      priorityAppointment?.id ?? sortedAppointments[0]?.id ?? "",
-      3
-    );
-  }, [isExpanded, priorityAppointment]);
+    return getCollapsedAppointments(sortedAppointments, selectedDate);
+  }, [isExpanded, selectedDate, sortedAppointments]);
 
   const hiddenCount = Math.max(sortedAppointments.length - visibleAppointments.length, 0);
+  const minutesUntilSelected = selected
+    ? timeToMinutes(selected.time) - timeToMinutes(mockNow)
+    : Number.POSITIVE_INFINITY;
+  const showOpenTurn = Boolean(
+    selected &&
+      isTodaySelected &&
+      nextAvailableToday &&
+      selected.id === nextAvailableToday.id &&
+      minutesUntilSelected >= 0 &&
+      minutesUntilSelected < 5
+  );
 
-  function moveDay(direction: -1 | 1) {
-    setActiveDayIndex((current) => {
-      const next = current + direction;
+  const quickChips = [
+    { label: "Ayer", dateKey: agendaDateKeys.yesterday },
+    { label: "Hoy", dateKey: agendaDateKeys.today },
+    { label: "Mañana", dateKey: agendaDateKeys.tomorrow },
+  ];
 
-      if (next < 0) {
-        return agendaDayViews.length - 1;
-      }
+  function applySelectedDate(nextDate: string) {
+    const nextAppointments = sortAppointments(getAgendaDay(nextDate).appointments);
 
-      if (next >= agendaDayViews.length) {
-        return 0;
-      }
+    setSelectedDate(nextDate);
+    setSelectedId(getDefaultSelectedId(nextAppointments, nextDate));
+    setIsExpanded(false);
+  }
 
-      return next;
-    });
+  function openDateModal() {
+    setDraftDate(selectedDate);
+    setIsDateModalOpen(true);
+  }
+
+  function applyCustomDate() {
+    applySelectedDate(draftDate);
+    setIsDateModalOpen(false);
   }
 
   return (
@@ -158,9 +169,21 @@ export default function AgendaPage() {
 
       <section className="agenda-content">
         <header className="agenda-header">
-          <div className="agenda-header__copy">
-            <h1 className="agenda-header__title">Agenda</h1>
-          </div>
+          <button
+            type="button"
+            className="agenda-icon-button"
+            aria-label="Elegir fecha"
+            onClick={openDateModal}
+          >
+            <svg
+              className="agenda-icon-button__svg"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <rect x="4" y="5" width="16" height="15" rx="3" />
+              <path d="M8 3v4M16 3v4M4 9h16" />
+            </svg>
+          </button>
 
           <button
             type="button"
@@ -168,47 +191,35 @@ export default function AgendaPage() {
             aria-label="Nuevo turno"
             onClick={() => navigate("/agenda")}
           >
-            <span className="agenda-icon-button__icon">＋</span>
+            <span className="agenda-icon-button__icon">+</span>
           </button>
         </header>
 
-        <article className="agenda-card agenda-card--date">
+        <article
+          className={`agenda-card agenda-card--date ${
+            isTodaySelected ? "agenda-card--date-today" : ""
+          }`.trim()}
+        >
           <div className="agenda-date-bar">
-            <button
-              type="button"
-              className="agenda-date-bar__nav"
-              aria-label="Día anterior"
-              onClick={() => moveDay(-1)}
-            >
-              ‹
-            </button>
-
-            <div className="agenda-date-bar__center">
-              <div className="agenda-date-bar__meta-row">
-                <span className="agenda-date-bar__helper">{activeDay.helper}</span>
-
-                {activeDayIndex !== currentDayIndex ? (
-                  <button
-                    type="button"
-                    className="agenda-date-bar__today"
-                    onClick={() => setActiveDayIndex(currentDayIndex)}
-                  >
-                    Volver a hoy
-                  </button>
-                ) : null}
-              </div>
-
-              <span className="agenda-date-bar__label">{activeDay.label}</span>
+            <div className="agenda-date-bar__chips">
+              {quickChips.map((chip) => (
+                <button
+                  key={chip.dateKey}
+                  type="button"
+                  className={`agenda-date-chip ${
+                    selectedDate === chip.dateKey ? "agenda-date-chip--active" : ""
+                  }`.trim()}
+                  onClick={() => applySelectedDate(chip.dateKey)}
+                >
+                  {chip.label}
+                </button>
+              ))}
             </div>
 
-            <button
-              type="button"
-              className="agenda-date-bar__nav"
-              aria-label="Día siguiente"
-              onClick={() => moveDay(1)}
-            >
-              ›
-            </button>
+            <span className="agenda-date-bar__label">{activeDay.dateLabel}</span>
+            <span className="agenda-date-bar__availability">
+              {activeDay.availabilityLabel}
+            </span>
           </div>
         </article>
 
@@ -228,39 +239,46 @@ export default function AgendaPage() {
           </div>
 
           <div className="agenda-list-scroll">
-            <div className="agenda-list">
-              {visibleAppointments.map((item) => {
-                const isSelected = item.id === selected?.id;
+            {visibleAppointments.length ? (
+              <div className="agenda-list">
+                {visibleAppointments.map((item) => {
+                  const isSelected = item.id === selected?.id;
 
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`agenda-row ${
-                      isSelected ? "agenda-row--selected" : ""
-                    }`.trim()}
-                    aria-pressed={isSelected}
-                    onClick={() => setSelectedId(item.id)}
-                  >
-                    <div className="agenda-row__time">{item.time}</div>
+                  return (
+                    <button
+                      key={`${selectedDate}-${item.id}-${item.time}`}
+                      type="button"
+                      className={`agenda-row ${
+                        isSelected ? "agenda-row--selected" : ""
+                      }`.trim()}
+                      aria-pressed={isSelected}
+                      onClick={() => setSelectedId(item.id)}
+                    >
+                      <div className="agenda-row__time">{item.time}</div>
 
-                    <div className="agenda-row__content">
-                      <p className="agenda-row__patient">{item.patient}</p>
-                      <p className="agenda-row__treatment">{item.treatment}</p>
-                    </div>
+                      <div className="agenda-row__content">
+                        <p className="agenda-row__patient">{item.patient}</p>
+                        <p className="agenda-row__treatment">{item.treatment}</p>
+                      </div>
 
-                    <div className="agenda-row__meta">
-                      <span className={statusClass(item.status)}>{item.status}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div className="agenda-row__meta">
+                        <span className={statusClass(item.status)}>{item.status}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="agenda-empty-state">
+                <p className="agenda-empty-state__title">No hay turnos para este día</p>
+                <p className="agenda-empty-state__copy">
+                  Probá con otra fecha desde el calendario.
+                </p>
+              </div>
+            )}
 
             {!isExpanded && hiddenCount > 0 ? (
-              <p className="agenda-list-card__foot">
-                {hiddenCount} turnos más ocultos
-              </p>
+              <p className="agenda-list-card__foot">{hiddenCount} turnos más ocultos</p>
             ) : null}
           </div>
         </section>
@@ -279,31 +297,90 @@ export default function AgendaPage() {
                 <p className="agenda-selected__treatment">{selected.treatment}</p>
               </div>
 
-              {selected.note ? (
-                <p className="agenda-selected__note">{selected.note}</p>
-              ) : null}
+              <div
+                className={`agenda-selected__actions ${
+                  showOpenTurn ? "" : "agenda-selected__actions--single"
+                }`.trim()}
+              >
+                {showOpenTurn ? (
+                  <button
+                    type="button"
+                    className="agenda-btn agenda-btn--primary"
+                    onClick={() => navigate(`/turno/${selected.id}`)}
+                  >
+                    Abrir turno
+                  </button>
+                ) : null}
 
-              <div className="agenda-selected__actions">
                 <button
                   type="button"
-                  className="agenda-btn agenda-btn--primary"
+                  className={showOpenTurn ? "agenda-btn agenda-btn--secondary" : "agenda-btn agenda-btn--primary"}
                   onClick={() => navigate(`/turno/${selected.id}`)}
                 >
-                  Abrir turno
-                </button>
-
-                <button
-                  type="button"
-                  className="agenda-btn agenda-btn--secondary"
-                  onClick={() => navigate(`/turno/${selected.id}`)}
-                >
-                  Ficha
+                  {showOpenTurn ? "Ficha" : "Ver ficha"}
                 </button>
               </div>
             </div>
           </article>
         ) : null}
       </section>
+
+      {isDateModalOpen ? (
+        <div className="agenda-modal-backdrop" role="presentation">
+          <div
+            className="agenda-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="agenda-date-modal-title"
+          >
+            <div className="agenda-modal__header">
+              <div>
+                <h2 id="agenda-date-modal-title" className="agenda-modal__title">
+                  Elegir fecha
+                </h2>
+                <p className="agenda-modal__description">
+                  Seleccioná un día para ver disponibilidad y turnos.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="agenda-modal__close"
+                aria-label="Cerrar"
+                onClick={() => setIsDateModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <input
+              type="date"
+              className="agenda-modal__input"
+              value={draftDate}
+              onChange={(event) => setDraftDate(event.target.value)}
+            />
+
+            <div className="agenda-modal__actions">
+              <button
+                type="button"
+                className="agenda-btn agenda-btn--secondary"
+                onClick={() => setIsDateModalOpen(false)}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className="agenda-btn agenda-btn--primary"
+                onClick={applyCustomDate}
+                disabled={!draftDate}
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <style>{`
         .agenda-screen {
@@ -342,19 +419,6 @@ export default function AgendaPage() {
           padding-top: 2px;
         }
 
-        .agenda-header__copy {
-          min-width: 0;
-        }
-
-        .agenda-header__title {
-          margin: 0;
-          font-size: 30px;
-          line-height: 1;
-          font-weight: 800;
-          letter-spacing: -0.04em;
-          color: #163252;
-        }
-
         .agenda-icon-button {
           width: 44px;
           height: 44px;
@@ -370,9 +434,19 @@ export default function AgendaPage() {
         }
 
         .agenda-icon-button__icon {
-          font-size: 22px;
+          font-size: 24px;
           line-height: 1;
           font-weight: 700;
+        }
+
+        .agenda-icon-button__svg {
+          width: 22px;
+          height: 22px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
         }
 
         .agenda-card,
@@ -388,7 +462,13 @@ export default function AgendaPage() {
         }
 
         .agenda-card--date {
-          padding: 12px 14px;
+          padding: 14px;
+          background: linear-gradient(180deg, #fbfdff 0%, #f2f7fd 100%);
+        }
+
+        .agenda-card--date-today {
+          background: linear-gradient(180deg, #fbfefd 0%, #eef8f1 100%);
+          border-color: #d9eadf;
         }
 
         .agenda-card--selected {
@@ -397,69 +477,59 @@ export default function AgendaPage() {
 
         .agenda-date-bar {
           display: grid;
-          grid-template-columns: 44px minmax(0, 1fr) 44px;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .agenda-date-bar__nav {
-          width: 44px;
-          height: 44px;
-          border-radius: 999px;
-          border: 1px solid #d8e4f1;
-          background: #ffffff;
-          color: #163252;
-          cursor: pointer;
-          font-size: 22px;
-          line-height: 1;
-        }
-
-        .agenda-date-bar__center {
-          min-width: 0;
-          display: grid;
-          gap: 4px;
+          gap: 10px;
           justify-items: center;
           text-align: center;
         }
 
-        .agenda-date-bar__meta-row {
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .agenda-date-bar__chips {
+          width: 100%;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 8px;
-          flex-wrap: wrap;
         }
 
-        .agenda-date-bar__helper {
-          min-height: 24px;
-          padding: 0 10px;
+        .agenda-date-chip {
+          min-height: 36px;
           border-radius: 999px;
-          background: #eaf2fb;
-          color: #4b6d96;
-          display: inline-flex;
-          align-items: center;
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-        }
-
-        .agenda-date-bar__today {
-          border: 0;
-          background: transparent;
-          padding: 0;
-          color: #2d5f93;
+          border: 1px solid #d7e3f0;
+          background: rgba(255, 255, 255, 0.82);
+          color: #4f6785;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 800;
           cursor: pointer;
         }
 
+        .agenda-date-chip--active {
+          background: #2d5f93;
+          border-color: #2d5f93;
+          color: #ffffff;
+          box-shadow: 0 10px 18px rgba(45, 95, 147, 0.14);
+        }
+
+        .agenda-card--date-today .agenda-date-chip--active {
+          background: #2f7b56;
+          border-color: #2f7b56;
+          box-shadow: 0 10px 18px rgba(47, 123, 86, 0.16);
+        }
+
         .agenda-date-bar__label {
-          font-size: 18px;
-          line-height: 1.18;
+          font-size: 20px;
+          line-height: 1.16;
           font-weight: 800;
           letter-spacing: -0.03em;
           color: #163252;
+        }
+
+        .agenda-date-bar__availability {
+          font-size: 13px;
+          line-height: 1.3;
+          color: #647a93;
+          font-weight: 700;
+        }
+
+        .agenda-card--date-today .agenda-date-bar__availability {
+          color: #467357;
         }
 
         .agenda-list-card {
@@ -509,6 +579,31 @@ export default function AgendaPage() {
           color: #788aa1;
           font-weight: 600;
           text-align: center;
+        }
+
+        .agenda-empty-state {
+          min-height: 100%;
+          display: grid;
+          place-content: center;
+          gap: 6px;
+          padding: 18px 12px;
+          text-align: center;
+        }
+
+        .agenda-empty-state__title {
+          margin: 0;
+          font-size: 16px;
+          line-height: 1.2;
+          color: #163252;
+          font-weight: 800;
+        }
+
+        .agenda-empty-state__copy {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.35;
+          color: #70829d;
+          font-weight: 600;
         }
 
         .agenda-row {
@@ -652,19 +747,15 @@ export default function AgendaPage() {
           white-space: nowrap;
         }
 
-        .agenda-selected__note {
-          margin: 6px 0 0;
-          font-size: 12px;
-          line-height: 1.32;
-          color: #74869c;
-          font-weight: 600;
-        }
-
         .agenda-selected__actions {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 10px;
           margin-top: 14px;
+        }
+
+        .agenda-selected__actions--single {
+          grid-template-columns: 1fr;
         }
 
         .agenda-btn {
@@ -685,6 +776,12 @@ export default function AgendaPage() {
           box-shadow: 0 12px 24px rgba(45, 95, 147, 0.16);
         }
 
+        .agenda-btn--primary:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+
         .agenda-btn--secondary {
           background: #edf4fb;
           color: #163252;
@@ -701,17 +798,106 @@ export default function AgendaPage() {
           cursor: pointer;
         }
 
+        .agenda-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(17, 25, 40, 0.36);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          z-index: 20;
+        }
+
+        .agenda-modal {
+          width: min(100%, 390px);
+          border-radius: 24px;
+          background: #ffffff;
+          border: 1px solid #dce7f3;
+          box-shadow: 0 20px 40px rgba(17, 25, 40, 0.18);
+          padding: 16px;
+        }
+
+        .agenda-modal__header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 14px;
+        }
+
+        .agenda-modal__title {
+          margin: 0;
+          font-size: 20px;
+          line-height: 1.1;
+          font-weight: 800;
+          color: #163252;
+        }
+
+        .agenda-modal__description {
+          margin: 6px 0 0;
+          font-size: 13px;
+          line-height: 1.35;
+          color: #6b7f99;
+          font-weight: 600;
+        }
+
+        .agenda-modal__close {
+          width: 36px;
+          height: 36px;
+          border-radius: 999px;
+          border: 1px solid #dce7f3;
+          background: #f8fbff;
+          color: #163252;
+          font-size: 22px;
+          line-height: 1;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+
+        .agenda-modal__input {
+          width: 100%;
+          min-height: 52px;
+          border-radius: 16px;
+          border: 1px solid #d6e2ef;
+          background: #fbfdff;
+          padding: 0 14px;
+          color: #163252;
+          font: inherit;
+        }
+
+        .agenda-modal__actions {
+          display: grid;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        @media (min-width: 390px) {
+          .agenda-modal__actions {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
         @media (max-width: 374px) {
           .agenda-content {
             gap: 10px;
           }
 
           .agenda-card--date {
-            padding: 10px 12px;
+            padding: 12px;
+          }
+
+          .agenda-date-bar__chips {
+            gap: 6px;
+          }
+
+          .agenda-date-chip {
+            min-height: 34px;
+            font-size: 11px;
           }
 
           .agenda-date-bar__label {
-            font-size: 16px;
+            font-size: 17px;
           }
 
           .agenda-list-card {
@@ -743,6 +929,10 @@ export default function AgendaPage() {
           .agenda-selected__treatment {
             font-size: 13px;
           }
+
+          .agenda-selected__actions {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-height: 700px) {
@@ -751,16 +941,24 @@ export default function AgendaPage() {
             gap: 10px;
           }
 
-          .agenda-header__title {
-            font-size: 27px;
+          .agenda-card--date {
+            padding: 12px;
           }
 
-          .agenda-card--date {
-            padding: 10px 12px;
+          .agenda-date-bar {
+            gap: 8px;
+          }
+
+          .agenda-date-chip {
+            min-height: 34px;
           }
 
           .agenda-date-bar__label {
-            font-size: 16px;
+            font-size: 17px;
+          }
+
+          .agenda-date-bar__availability {
+            font-size: 12px;
           }
 
           .agenda-list-card {
@@ -789,7 +987,8 @@ export default function AgendaPage() {
             font-size: 12px;
           }
 
-          .agenda-card__inner {
+          .agenda-card__inner,
+          .agenda-modal {
             padding: 14px;
           }
 
@@ -802,12 +1001,17 @@ export default function AgendaPage() {
           }
 
           .agenda-selected__treatment,
-          .agenda-selected__note {
+          .agenda-empty-state__copy,
+          .agenda-modal__description {
             font-size: 12px;
           }
 
-          .agenda-btn {
+          .agenda-btn,
+          .agenda-icon-button {
             min-height: 44px;
+          }
+
+          .agenda-btn {
             font-size: 13px;
           }
         }

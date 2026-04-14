@@ -13,7 +13,6 @@ type ModalKind = "public" | "private" | null;
 type HeroConfig = {
   chip: string;
   title: string;
-  description: string;
   primaryAction?: string;
   secondaryAction?: string;
   singleCta?: boolean;
@@ -34,67 +33,56 @@ function heroConfig(state: TurnFlowState, canCloseSession: boolean): HeroConfig 
     case "CONSENT_REQUIRED":
       return {
         chip: "Consentimiento pendiente",
-        title: "Primero registrá el consentimiento",
-        description: "Necesitás registrarlo antes de iniciar la atención.",
-        primaryAction: "Tomar consentimiento",
+        title: "Registrar el consentimiento",
+        primaryAction: "Registrar consentimiento",
         singleCta: true,
       };
     case "BEFORE_PHOTO_OPTIONAL":
       return {
-        chip: "Listo para continuar",
-        title: "Podés registrar la foto del antes",
-        description: "Es opcional y puede ayudarte como referencia clínica.",
-        primaryAction: "Tomar foto del antes",
+        chip: "Antes de iniciar",
+        title: "Registrar el antes",
+        primaryAction: "Tomar foto",
         secondaryAction: "Omitir",
       };
     case "IN_PROGRESS":
       return {
         chip: "Sesión en curso",
-        title: "La sesión está en marcha",
-        description: canCloseSession
-          ? "Ya podés cerrar la sesión cuando lo consideres correcto."
-          : "Seguí el tratamiento. El sistema acompaña el tiempo restante.",
+        title: "Sesión en marcha",
         primaryAction: canCloseSession ? "Cerrar sesión" : undefined,
         singleCta: true,
       };
     case "AFTER_PHOTO_OPTIONAL":
       return {
         chip: "Sesión cerrada",
-        title: "Podés registrar la foto del después",
-        description: "Es opcional y queda disponible como cierre visual.",
-        primaryAction: "Tomar foto del después",
+        title: "Registrar el después",
+        primaryAction: "Tomar foto",
         secondaryAction: "Omitir",
       };
     case "PUBLIC_NOTE_OPTIONAL":
       return {
         chip: "Sesión cerrada",
-        title: "Podés agregar una nota pública",
-        description:
-          "Se verá en el historial clínico del paciente y por otros médicos con acceso.",
-        primaryAction: "Agregar nota pública",
+        title: "Agregar nota pública",
+        primaryAction: "Tomar nota",
         secondaryAction: "Omitir",
       };
     case "PRIVATE_NOTE_OPTIONAL":
       return {
         chip: "Sesión cerrada",
-        title: "Podés agregar una nota privada",
-        description: "Solo será visible para vos. El paciente no podrá verla.",
-        primaryAction: "Agregar nota privada",
+        title: "Agregar nota privada",
+        primaryAction: "Tomar nota",
         secondaryAction: "Omitir",
       };
     case "PAYMENT_REQUIRED":
       return {
         chip: "Lista para cobrar",
-        title: "La atención está lista para cobro",
-        description: "Continuá con el cobro para cerrar el ciclo de este turno.",
-        primaryAction: "Ir a cobro",
+        title: "Turno finalizado",
+        primaryAction: "Ir al cobro",
         secondaryAction: "Volver a Hoy",
       };
     default:
       return {
         chip: "Turno",
         title: "Continuar flujo",
-        description: "",
       };
   }
 }
@@ -162,19 +150,18 @@ function isAfterClosingState(state: TurnFlowState) {
 }
 
 export default function TurnWorkspacePage() {
-  const navigate = useNavigate();
   const params = useParams();
   const turnId = params.id ?? "a1";
+
+  return <TurnWorkspacePageContent key={turnId} turnId={turnId} />;
+}
+
+function TurnWorkspacePageContent({ turnId }: { turnId: string }) {
+  const navigate = useNavigate();
   const [flow, setFlow] = useState<TurnFlowRuntime>(() => getTurnFlow(turnId));
   const [modalKind, setModalKind] = useState<ModalKind>(null);
   const [draftNote, setDraftNote] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  useEffect(() => {
-    setFlow(getTurnFlow(turnId));
-    setModalKind(null);
-    setDraftNote("");
-  }, [turnId]);
 
   useEffect(() => {
     if (flow.state !== "IN_PROGRESS" || flow.secondsLeft <= 0) {
@@ -205,16 +192,13 @@ export default function TurnWorkspacePage() {
 
   const hero = heroConfig(flow.state, flow.canCloseSession);
   const currentProgress = progressIndex(flow.state);
-  const progressSteps = ["Consentimiento", "Antes", "Sesión", "Después", "Cobro"];
+  const progressSteps = ["Pre", "Antes", "Sesión", "Después", "Cobro"];
   const showTimer = flow.state === "IN_PROGRESS";
   const showContextCard = !isAfterClosingState(flow.state);
   const sessionSummary = useMemo(
     () => [
       { label: "Paciente", value: flow.patient },
       { label: "Tratamiento", value: flow.treatment },
-      { label: "Duración planificada", value: "1 min" },
-      { label: "Franja", value: flow.slotLabel },
-      { label: "Consentimiento", value: "Registrado" },
       {
         label: "Foto del antes",
         value: summaryStatus(flow.beforePhotoStatus),
@@ -371,100 +355,92 @@ export default function TurnWorkspacePage() {
           >
             ‹
           </button>
-
-          <button
-            type="button"
-            className="turn-file-button"
-            onClick={() => navigate(`/turno/${flow.turnId}`)}
-          >
-            Ficha
-          </button>
         </header>
 
-        <div className="turn-body-scroll">
-          <div className="turn-stack">
-            <article
-              className={`turn-card turn-card--hero ${
-                flow.state === "IN_PROGRESS" && flow.canCloseSession
-                  ? "turn-card--warm"
+        <article
+          className={`turn-card turn-card--hero ${
+            flow.state === "CONSENT_REQUIRED"
+              ? "turn-card--critical"
+              : flow.state === "IN_PROGRESS" && flow.canCloseSession
+                ? "turn-card--warm"
+                : flow.state === "PAYMENT_REQUIRED"
+                  ? "turn-card--success"
                   : ""
-              } ${flow.state === "PAYMENT_REQUIRED" ? "turn-card--success" : ""}`.trim()}
-            >
-              <div className="turn-card__inner">
-                <div className="turn-hero__top">
-                  <span className={chipClass(flow.state, flow.canCloseSession)}>
-                    {hero.chip}
-                  </span>
-                </div>
+          }`.trim()}
+        >
+          <div className="turn-card__inner">
+            <div className="turn-hero__top">
+              <span className={chipClass(flow.state, flow.canCloseSession)}>
+                {hero.chip}
+              </span>
+            </div>
 
-                <h1 className="turn-hero__title">{hero.title}</h1>
-                <p className="turn-hero__description">{hero.description}</p>
+            <h1 className="turn-hero__title">{hero.title}</h1>
 
-                <div className="turn-progress" aria-label="Progreso del turno">
-                  {progressSteps.map((step, index) => {
-                    const stepClass = [
-                      "turn-progress__item",
-                      index < currentProgress ? "turn-progress__item--done" : "",
-                      index === currentProgress ? "turn-progress__item--current" : "",
-                    ]
-                      .join(" ")
-                      .trim();
+            <div className="turn-progress" aria-label="Progreso del turno">
+              {progressSteps.map((step, index) => {
+                const stepClass = [
+                  "turn-progress__item",
+                  index < currentProgress ? "turn-progress__item--done" : "",
+                  index === currentProgress ? "turn-progress__item--current" : "",
+                ]
+                  .join(" ")
+                  .trim();
 
-                    return (
-                      <div key={step} className={stepClass}>
-                        <span className="turn-progress__dot" aria-hidden="true" />
-                        <span className="turn-progress__label">{step}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {showTimer ? (
-                  <div className="turn-timer-block">
-                    <p className="turn-timer-block__label">Tiempo restante</p>
-                    <p className="turn-timer-block__value">
-                      {formatSeconds(flow.secondsLeft)}
-                    </p>
+                return (
+                  <div key={step} className={stepClass}>
+                    <span className="turn-progress__dot" aria-hidden="true" />
+                    <span className="turn-progress__label">{step}</span>
                   </div>
+                );
+              })}
+            </div>
+
+            {showTimer ? (
+              <div className="turn-timer-block">
+                <p className="turn-timer-block__label">Tiempo restante</p>
+                <p className="turn-timer-block__value">
+                  {formatSeconds(flow.secondsLeft)}
+                </p>
+              </div>
+            ) : null}
+
+            {hero.primaryAction || hero.secondaryAction ? (
+              <div
+                className={`turn-actions ${hero.singleCta || !hero.secondaryAction ? "turn-actions--single" : ""
+                  }`.trim()}
+              >
+                {hero.primaryAction ? (
+                  <button
+                    type="button"
+                    className="turn-btn turn-btn--primary"
+                    onClick={handlePrimaryAction}
+                  >
+                    {hero.primaryAction}
+                  </button>
                 ) : null}
 
-                {hero.primaryAction || hero.secondaryAction ? (
-                  <div
-                    className={`turn-actions ${
-                      hero.singleCta || !hero.secondaryAction
-                        ? "turn-actions--single"
-                        : ""
-                    }`.trim()}
+                {hero.secondaryAction ? (
+                  <button
+                    type="button"
+                    className="turn-btn turn-btn--secondary"
+                    onClick={handleSecondaryAction}
                   >
-                    {hero.primaryAction ? (
-                      <button
-                        type="button"
-                        className="turn-btn turn-btn--primary"
-                        onClick={handlePrimaryAction}
-                      >
-                        {hero.primaryAction}
-                      </button>
-                    ) : null}
-
-                    {hero.secondaryAction ? (
-                      <button
-                        type="button"
-                        className="turn-btn turn-btn--secondary"
-                        onClick={handleSecondaryAction}
-                      >
-                        {hero.secondaryAction}
-                      </button>
-                    ) : null}
-                  </div>
+                    {hero.secondaryAction}
+                  </button>
                 ) : null}
               </div>
-            </article>
+            ) : null}
+          </div>
+        </article>
 
-            {showContextCard ? (
-              <article className="turn-card">
-                <div className="turn-card__inner">
-                  <h2 className="turn-section-title">Contexto útil</h2>
+        <section className="turn-lower-region">
+          {showContextCard ? (
+            <article className="turn-card turn-card--bottom">
+              <div className="turn-card__inner turn-card__inner--bottom">
+                <h2 className="turn-section-title">Contexto útil</h2>
 
+                <div className="turn-bottom-scroll">
                   <div className="turn-context-grid">
                     <div className="turn-context-item">
                       <span className="turn-context-item__label">Paciente</span>
@@ -474,16 +450,6 @@ export default function TurnWorkspacePage() {
                     <div className="turn-context-item">
                       <span className="turn-context-item__label">Tratamiento</span>
                       <span className="turn-context-item__value">{flow.treatment}</span>
-                    </div>
-
-                    <div className="turn-context-item">
-                      <span className="turn-context-item__label">Duración estimada</span>
-                      <span className="turn-context-item__value">1 min</span>
-                    </div>
-
-                    <div className="turn-context-item">
-                      <span className="turn-context-item__label">Franja</span>
-                      <span className="turn-context-item__value">{flow.slotLabel}</span>
                     </div>
 
                     {flow.observation ? (
@@ -498,25 +464,28 @@ export default function TurnWorkspacePage() {
                     ) : null}
                   </div>
                 </div>
-              </article>
-            ) : (
-              <article className="turn-card">
-                <div className="turn-card__inner">
-                  <h2 className="turn-section-title">Resumen de sesión</h2>
+              </div>
+            </article>
+          ) : (
+            <article
+              className={`turn-card turn-card--bottom ${flow.state === "PAYMENT_REQUIRED" ? "turn-card--success-soft" : ""
+                }`.trim()}
+            >
+              <div className="turn-card__inner turn-card__inner--bottom">
+                <h2 className="turn-section-title">Resumen de sesión</h2>
 
-                  <div className="turn-summary-list">
-                    {sessionSummary.map((item) => (
-                      <div key={item.label} className="turn-summary-row">
-                        <span className="turn-summary-row__label">{item.label}</span>
-                        <span className="turn-summary-row__value">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="turn-bottom-scroll turn-summary-list">
+                  {sessionSummary.map((item) => (
+                    <div key={item.label} className="turn-summary-row">
+                      <span className="turn-summary-row__label">{item.label}</span>
+                      <span className="turn-summary-row__value">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
-              </article>
-            )}
-          </div>
-        </div>
+              </div>
+            </article>
+          )}
+        </section>
       </section>
 
       {modalKind ? (
@@ -534,8 +503,8 @@ export default function TurnWorkspacePage() {
                 </h2>
                 <p className="turn-modal__description">
                   {modalKind === "public"
-                    ? "Esta nota quedará visible en el historial clínico del paciente."
-                    : "Esta nota solo será visible para el médico tratante."}
+                    ? "Quedará visible en el historial clínico del paciente y para otros médicos con acceso."
+                    : "Solo será visible para vos. El paciente no podrá verla."}
                 </p>
               </div>
 
@@ -554,8 +523,8 @@ export default function TurnWorkspacePage() {
               className="turn-modal__textarea"
               placeholder={
                 modalKind === "public"
-                  ? "Escribí una nota clínica breve."
-                  : "Escribí una observación privada."
+                  ? "Escribí una nota pública."
+                  : "Escribí una nota privada."
               }
               value={draftNote}
               onChange={(event) => setDraftNote(event.target.value)}
@@ -600,7 +569,7 @@ export default function TurnWorkspacePage() {
           height: calc(100% - env(safe-area-inset-top, 0px));
           padding: 12px 16px 16px;
           display: grid;
-          grid-template-rows: auto minmax(0, 1fr);
+          grid-template-rows: auto auto minmax(0, 1fr);
           gap: 12px;
           overflow: hidden;
         }
@@ -615,13 +584,12 @@ export default function TurnWorkspacePage() {
         .turn-topbar {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-start;
           gap: 12px;
           padding-top: 8px;
         }
 
-        .turn-icon-button,
-        .turn-file-button {
+        .turn-icon-button {
           min-height: 40px;
           border-radius: 999px;
           border: 1px solid #d6e2ef;
@@ -641,27 +609,9 @@ export default function TurnWorkspacePage() {
           flex-shrink: 0;
         }
 
-        .turn-file-button {
-          padding: 0 14px;
-          font-size: 13px;
-          flex-shrink: 0;
-        }
-
-        .turn-body-scroll {
+        .turn-lower-region {
           min-height: 0;
-          overflow-y: auto;
-          padding-right: 2px;
-          scrollbar-width: none;
-        }
-
-        .turn-body-scroll::-webkit-scrollbar {
-          display: none;
-        }
-
-        .turn-stack {
-          display: grid;
-          gap: 16px;
-          padding-bottom: 12px;
+          overflow: hidden;
         }
 
         .turn-card {
@@ -679,18 +629,39 @@ export default function TurnWorkspacePage() {
           background: linear-gradient(180deg, #fffdf9 0%, #fff7ec 100%);
         }
 
+        .turn-card--critical {
+          background: linear-gradient(180deg, #fff8f8 0%, #ffecec 100%);
+        }
+
         .turn-card--success {
           background: linear-gradient(180deg, #fbfefd 0%, #f1f8f4 100%);
+        }
+
+        .turn-card--success-soft {
+          background: linear-gradient(180deg, rgba(251, 254, 253, 0.95) 0%, rgba(241, 248, 244, 0.96) 100%);
+        }
+
+        .turn-card--bottom {
+          height: 100%;
+          min-height: 0;
+          overflow: hidden;
         }
 
         .turn-card__inner {
           padding: 16px;
         }
 
+        .turn-card__inner--bottom {
+          height: 100%;
+          min-height: 0;
+          display: grid;
+          grid-template-rows: auto minmax(0, 1fr);
+        }
+
         .turn-hero__top {
           display: flex;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: center;
         }
 
         .turn-chip {
@@ -732,14 +703,7 @@ export default function TurnWorkspacePage() {
           font-weight: 800;
           color: #163252;
           letter-spacing: -0.03em;
-        }
-
-        .turn-hero__description {
-          margin: 8px 0 0;
-          font-size: 14px;
-          line-height: 1.4;
-          color: #6b7f99;
-          font-weight: 600;
+          text-align: center;
         }
 
         .turn-progress {
@@ -788,6 +752,7 @@ export default function TurnWorkspacePage() {
           display: grid;
           justify-items: center;
           text-align: center;
+          width: 100%;
         }
 
         .turn-timer-block__label {
@@ -864,6 +829,17 @@ export default function TurnWorkspacePage() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
+        }
+
+        .turn-bottom-scroll {
+          min-height: 0;
+          overflow-y: auto;
+          padding-right: 2px;
+          scrollbar-width: none;
+        }
+
+        .turn-bottom-scroll::-webkit-scrollbar {
+          display: none;
         }
 
         .turn-context-item,
@@ -1029,10 +1005,6 @@ export default function TurnWorkspacePage() {
             padding-bottom: 2px;
           }
 
-          .turn-stack {
-            gap: 12px;
-          }
-
           .turn-card__inner,
           .turn-modal {
             padding: 14px;
@@ -1042,7 +1014,6 @@ export default function TurnWorkspacePage() {
             font-size: 23px;
           }
 
-          .turn-hero__description,
           .turn-context-item__value,
           .turn-summary-row__value,
           .turn-modal__description {
@@ -1054,7 +1025,6 @@ export default function TurnWorkspacePage() {
           }
 
           .turn-btn,
-          .turn-file-button,
           .turn-icon-button {
             min-height: 44px;
           }
