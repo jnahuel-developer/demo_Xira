@@ -11,6 +11,7 @@ export type TurnMock = {
   patient: string;
   treatment: string;
   status: TurnStatus;
+  durationMin: number;
   lastSessionLabel: string;
   previousSettingsLabel?: string;
   requiredEquipmentLabel?: string;
@@ -30,6 +31,7 @@ const turnMocks: Record<string, TurnMock> = {
     patient: "Carla Fernández",
     treatment: "Mesoterapia facial",
     status: "consent_pending",
+    durationMin: 2,
     lastSessionLabel: "Hace 28 días",
     previousSettingsLabel: "Intensidad media · Duración 20 min",
     requiredEquipmentLabel: "Hydrafacial H2",
@@ -48,6 +50,7 @@ const turnMocks: Record<string, TurnMock> = {
     patient: "Laura Pérez",
     treatment: "Peeling suave",
     status: "closed_pending_payment",
+    durationMin: 1,
     lastSessionLabel: "Hace 21 días",
     previousSettingsLabel: "Peeling suave · Duración 15 min",
     usefulObservation: "Paciente esperando en sala",
@@ -65,6 +68,7 @@ const turnMocks: Record<string, TurnMock> = {
     patient: "Ana Ruiz",
     treatment: "Consulta control",
     status: "ready_to_start",
+    durationMin: 2,
     lastSessionLabel: "Hace 14 días",
     usefulObservation: "Revisar evolución de última consulta",
     step: {
@@ -81,6 +85,7 @@ const turnMocks: Record<string, TurnMock> = {
     patient: "Julia Sosa",
     treatment: "Botox frente",
     status: "in_progress",
+    durationMin: 3,
     lastSessionLabel: "Hace 35 días",
     previousSettingsLabel: "Botox frente · 18 min",
     usefulObservation: "Comparar con fotos previas",
@@ -98,6 +103,7 @@ const turnMocks: Record<string, TurnMock> = {
     patient: "Micaela Ríos",
     treatment: "Láser vascular",
     status: "ready_to_close",
+    durationMin: 2,
     lastSessionLabel: "Hace 42 días",
     previousSettingsLabel: "Láser medio · 25 min",
     requiredEquipmentLabel: "Equipo láser VascuLite",

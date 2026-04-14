@@ -29,6 +29,7 @@ function upcomingStatusClass(status: "Confirmado" | "Por llegar" | "Esperando") 
 
 export default function TodayPage() {
   const navigate = useNavigate();
+  const notificationCount = todayMock.pendingItems.length;
 
   return (
     <main className="today-screen">
@@ -47,8 +48,10 @@ export default function TodayPage() {
             className="today-icon-button"
             aria-label="Notificaciones"
           >
-            <span className="today-icon-button__icon">🔔</span>
-            <span className="today-icon-button__badge" />
+            <span className="today-icon-button__icon">◌</span>
+            {notificationCount > 0 ? (
+              <span className="today-icon-button__badge">{notificationCount}</span>
+            ) : null}
           </button>
         </header>
 
@@ -56,15 +59,18 @@ export default function TodayPage() {
           <article className="today-card today-card--hero">
             <div className="today-card__inner">
               <div className="today-hero__top">
-                <span className="today-hero__eyebrow">Próximo turno</span>
+                <p className="today-hero__eyebrow">Próximo turno</p>
                 <span className="today-chip today-chip--primary">
                   {todayMock.hero.statusLabel}
                 </span>
               </div>
 
-              <h2 className="today-hero__time">{todayMock.hero.time}</h2>
-              <p className="today-hero__patient">{todayMock.hero.patient}</p>
-              <p className="today-hero__treatment">{todayMock.hero.treatment}</p>
+              <div className="today-hero__summary">
+                <p className="today-hero__time">{todayMock.hero.time}</p>
+                <p className="today-hero__treatment">{todayMock.hero.treatment}</p>
+              </div>
+
+              <h2 className="today-hero__patient">{todayMock.hero.patient}</h2>
               <p className="today-hero__meta">{todayMock.hero.lastSessionLabel}</p>
 
               <div className="today-hero__actions">
@@ -89,12 +95,20 @@ export default function TodayPage() {
 
           <article className="today-card">
             <div className="today-card__inner">
-              <h3 className="today-section-title">Pendientes de hoy</h3>
+              <div className="today-section-head">
+                <h3 className="today-section-title">Pendientes de hoy</h3>
+                <span className="today-section-count">
+                  {todayMock.pendingItems.length}
+                </span>
+              </div>
 
               <div className="today-pending-list">
-                {todayMock.pendingItems.map((item) => (
+                {todayMock.pendingItems.slice(0, 3).map((item) => (
                   <div key={item.id} className="today-pending-item">
-                    <div className={`today-pending-item__icon today-pending-item__icon--${item.kind}`}>
+                    <div
+                      className={`today-pending-item__icon today-pending-item__icon--${item.kind}`}
+                      aria-hidden="true"
+                    >
                       {pendingIcon(item.kind)}
                     </div>
 
@@ -126,10 +140,19 @@ export default function TodayPage() {
 
           <article className="today-card">
             <div className="today-card__inner">
-              <h3 className="today-section-title">Después sigue</h3>
+              <div className="today-section-head">
+                <h3 className="today-section-title">Después sigue</h3>
+                <button
+                  type="button"
+                  className="today-inline-link"
+                  onClick={() => navigate("/agenda")}
+                >
+                  Ver agenda
+                </button>
+              </div>
 
               <div className="today-upcoming-list">
-                {todayMock.upcomingItems.map((item) => (
+                {todayMock.upcomingItems.slice(0, 3).map((item) => (
                   <button
                     key={item.id}
                     type="button"
@@ -143,7 +166,9 @@ export default function TodayPage() {
                       <p className="today-upcoming-item__subtitle">{item.treatment}</p>
                     </div>
 
-                    <span className={upcomingStatusClass(item.status)}>{item.status}</span>
+                    <span className={upcomingStatusClass(item.status)}>
+                      {item.status}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -156,7 +181,9 @@ export default function TodayPage() {
               className="today-shortcut"
               onClick={() => navigate("/agenda")}
             >
-              <span className="today-shortcut__icon">＋</span>
+              <span className="today-shortcut__icon" aria-hidden="true">
+                ＋
+              </span>
               <span className="today-shortcut__label">Nuevo turno</span>
             </button>
 
@@ -165,7 +192,9 @@ export default function TodayPage() {
               className="today-shortcut"
               onClick={() => navigate("/agenda")}
             >
-              <span className="today-shortcut__icon">🗓</span>
+              <span className="today-shortcut__icon" aria-hidden="true">
+                ☷
+              </span>
               <span className="today-shortcut__label">Ver agenda</span>
             </button>
 
@@ -174,7 +203,9 @@ export default function TodayPage() {
               className="today-shortcut"
               onClick={() => navigate("/pacientes")}
             >
-              <span className="today-shortcut__icon">👤</span>
+              <span className="today-shortcut__icon" aria-hidden="true">
+                ⌕
+              </span>
               <span className="today-shortcut__label">Pacientes</span>
             </button>
           </section>
@@ -184,7 +215,7 @@ export default function TodayPage() {
       <style>{`
         .today-screen {
           min-height: 100vh;
-          background: var(--app-bg);
+          background: linear-gradient(180deg, #f7fbff 0%, #eef4fb 100%);
         }
 
         .today-safe-top {
@@ -219,38 +250,38 @@ export default function TodayPage() {
           margin: 0 0 4px;
           font-size: 13px;
           line-height: 1.2;
-          color: var(--app-muted);
-          font-weight: 500;
+          color: #7387a1;
+          font-weight: 600;
         }
 
         .today-header__name {
           margin: 0;
           font-size: 28px;
-          line-height: 1.05;
+          line-height: 1.04;
           font-weight: 800;
           letter-spacing: -0.03em;
-          color: var(--app-text);
+          color: #163252;
         }
 
         .today-header__clinic {
           margin: 6px 0 0;
           font-size: 14px;
           line-height: 1.3;
-          color: var(--app-muted);
-          font-weight: 500;
+          color: #6b7f99;
+          font-weight: 600;
         }
 
         .today-icon-button {
           width: 44px;
           height: 44px;
-          border: 0;
+          border: 1px solid #d6e2ef;
           border-radius: 999px;
-          background: var(--app-surface);
-          box-shadow: var(--app-shadow);
+          background: rgba(255, 255, 255, 0.9);
+          box-shadow: 0 10px 22px rgba(45, 95, 147, 0.08);
           display: grid;
           place-items: center;
           position: relative;
-          color: var(--app-text);
+          color: #163252;
           cursor: pointer;
           flex-shrink: 0;
         }
@@ -262,13 +293,19 @@ export default function TodayPage() {
 
         .today-icon-button__badge {
           position: absolute;
-          top: 10px;
-          right: 10px;
-          width: 8px;
-          height: 8px;
+          top: 4px;
+          right: 4px;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 4px;
           border-radius: 999px;
-          background: #ff7262;
-          border: 2px solid var(--app-surface);
+          background: #2d5f93;
+          color: #fff;
+          display: grid;
+          place-items: center;
+          font-size: 10px;
+          font-weight: 800;
+          border: 2px solid #fff;
         }
 
         .today-stack {
@@ -277,21 +314,18 @@ export default function TodayPage() {
         }
 
         .today-card {
-          background: var(--app-surface);
-          border: 1px solid var(--app-line);
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid #dce7f3;
           border-radius: 24px;
-          box-shadow: var(--app-shadow);
+          box-shadow: 0 10px 28px rgba(48, 90, 138, 0.07);
         }
 
         .today-card--hero {
-          overflow: hidden;
-          background:
-            radial-gradient(circle at top right, rgba(35, 74, 138, 0.08), transparent 32%),
-            linear-gradient(180deg, #ffffff, #fbfcff);
+          background: linear-gradient(180deg, #fbfdff 0%, #f1f7fe 100%);
         }
 
         .today-card__inner {
-          padding: 18px;
+          padding: 16px;
         }
 
         .today-hero__top {
@@ -303,75 +337,92 @@ export default function TodayPage() {
         }
 
         .today-hero__eyebrow {
+          margin: 0;
           font-size: 12px;
           line-height: 1.2;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.06em;
-          color: var(--app-muted);
+          letter-spacing: 0.08em;
+          color: #7387a1;
         }
 
         .today-chip {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           min-height: 28px;
-          padding: 0 12px;
+          padding: 0 10px;
           border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
+          font-size: 11px;
+          font-weight: 800;
           white-space: nowrap;
         }
 
         .today-chip--primary {
-          background: var(--app-primary-soft);
-          color: var(--app-primary);
+          background: #e8f1fb;
+          color: #2d5f93;
         }
 
         .today-chip--success {
-          background: #edf8f0;
-          color: #257245;
+          background: #edf7f2;
+          color: #2d7b53;
         }
 
         .today-chip--warning {
-          background: #fff6e9;
-          color: #9a6400;
+          background: #fff5e8;
+          color: #9d6d19;
+        }
+
+        .today-hero__summary {
+          display: flex;
+          align-items: baseline;
+          gap: 10px;
+          min-width: 0;
         }
 
         .today-hero__time {
-          margin: 0 0 10px;
-          font-size: 40px;
+          margin: 0;
+          font-size: 34px;
           line-height: 0.95;
           font-weight: 800;
-          letter-spacing: -0.04em;
-        }
-
-        .today-hero__patient {
-          margin: 0 0 6px;
-          font-size: 24px;
-          line-height: 1.05;
-          font-weight: 750;
-          letter-spacing: -0.03em;
+          letter-spacing: -0.05em;
+          color: #163252;
+          flex-shrink: 0;
         }
 
         .today-hero__treatment {
-          margin: 0 0 10px;
+          margin: 0;
+          min-width: 0;
           font-size: 15px;
-          line-height: 1.35;
-          font-weight: 600;
-          color: var(--app-text);
+          line-height: 1.2;
+          color: #627791;
+          font-weight: 700;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .today-hero__patient {
+          margin: 12px 0 0;
+          font-size: 22px;
+          line-height: 1.06;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          color: #163252;
         }
 
         .today-hero__meta {
-          margin: 0;
-          font-size: 14px;
+          margin: 8px 0 0;
+          font-size: 13px;
           line-height: 1.35;
-          color: var(--app-muted);
+          color: #7387a1;
+          font-weight: 600;
         }
 
         .today-hero__actions {
           display: grid;
           gap: 10px;
-          margin-top: 18px;
+          margin-top: 16px;
         }
 
         @media (min-width: 390px) {
@@ -385,41 +436,71 @@ export default function TodayPage() {
           border-radius: 16px;
           border: 0;
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 800;
           cursor: pointer;
         }
 
         .today-btn--primary {
-          background: var(--app-primary);
+          background: #2d5f93;
           color: #fff;
+          box-shadow: 0 12px 24px rgba(45, 95, 147, 0.16);
         }
 
         .today-btn--secondary {
-          background: #f8fafe;
-          color: var(--app-text);
-          border: 1px solid var(--app-line);
+          background: #edf4fb;
+          color: #163252;
+          border: 1px solid #d9e6f4;
+        }
+
+        .today-section-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 14px;
         }
 
         .today-section-title {
-          margin: 0 0 14px;
-          font-size: 16px;
-          line-height: 1.25;
-          font-weight: 750;
-          letter-spacing: -0.02em;
+          margin: 0;
+          font-size: 18px;
+          line-height: 1.15;
+          font-weight: 800;
+          color: #163252;
+        }
+
+        .today-section-count {
+          min-width: 32px;
+          height: 32px;
+          border-radius: 999px;
+          background: #edf4fb;
+          color: #55759b;
+          display: grid;
+          place-items: center;
+          font-size: 13px;
+          font-weight: 800;
+          flex-shrink: 0;
         }
 
         .today-pending-list,
         .today-upcoming-list {
           display: grid;
-          gap: 12px;
+          gap: 10px;
+        }
+
+        .today-pending-item,
+        .today-upcoming-item {
+          width: 100%;
+          border: 1px solid #dce8f5;
+          background: #fbfdff;
+          border-radius: 18px;
+          padding: 14px;
         }
 
         .today-pending-item {
           display: grid;
-          grid-template-columns: auto 1fr auto;
-          align-items: center;
+          grid-template-columns: 36px minmax(0, 1fr) auto;
           gap: 12px;
-          min-height: 56px;
+          align-items: center;
         }
 
         .today-pending-item__icon {
@@ -428,23 +509,27 @@ export default function TodayPage() {
           border-radius: 12px;
           display: grid;
           place-items: center;
-          font-size: 16px;
-          flex-shrink: 0;
+          font-size: 15px;
+          font-weight: 800;
         }
 
         .today-pending-item__icon--consent {
-          background: #eef4ff;
+          background: #e8f1fb;
+          color: #2d5f93;
         }
 
         .today-pending-item__icon--payment {
-          background: #eff8f1;
+          background: #edf7f2;
+          color: #2d7b53;
         }
 
         .today-pending-item__icon--session {
-          background: #fff5ea;
+          background: #eef4f8;
+          color: #617990;
         }
 
-        .today-pending-item__copy {
+        .today-pending-item__copy,
+        .today-upcoming-item__copy {
           min-width: 0;
         }
 
@@ -452,105 +537,151 @@ export default function TodayPage() {
         .today-upcoming-item__title {
           margin: 0;
           font-size: 14px;
-          line-height: 1.25;
-          font-weight: 700;
-          color: var(--app-text);
+          line-height: 1.2;
+          font-weight: 800;
+          color: #163252;
         }
 
         .today-pending-item__subtitle,
         .today-upcoming-item__subtitle {
           margin: 4px 0 0;
           font-size: 13px;
-          line-height: 1.25;
-          color: var(--app-muted);
+          line-height: 1.3;
+          color: #6e829a;
+          font-weight: 600;
         }
 
         .today-inline-link {
           border: 0;
           background: transparent;
-          color: var(--app-primary);
+          padding: 0;
+          color: #2d5f93;
           font-size: 13px;
           font-weight: 700;
-          padding: 0;
           cursor: pointer;
           white-space: nowrap;
         }
 
         .today-upcoming-item {
-          width: 100%;
-          border: 0;
-          background: transparent;
-          padding: 0;
           display: grid;
-          grid-template-columns: 56px 1fr auto;
-          align-items: center;
+          grid-template-columns: 52px minmax(0, 1fr) auto;
           gap: 12px;
+          align-items: center;
           text-align: left;
           cursor: pointer;
         }
 
         .today-upcoming-item__time {
-          font-size: 16px;
+          font-size: 17px;
+          line-height: 1;
           font-weight: 800;
-          letter-spacing: -0.02em;
-        }
-
-        .today-upcoming-item__copy {
-          min-width: 0;
+          color: #163252;
         }
 
         .today-shortcuts {
           display: grid;
-          gap: 12px;
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .today-shortcuts > :last-child {
-          grid-column: 1 / -1;
-        }
-
-        @media (min-width: 390px) {
-          .today-shortcuts {
-            grid-template-columns: repeat(3, 1fr);
-          }
-
-          .today-shortcuts > :last-child {
-            grid-column: auto;
-          }
+          gap: 10px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
         .today-shortcut {
-          min-height: 84px;
-          border: 1px solid var(--app-line);
-          background: var(--app-surface);
+          min-height: 92px;
+          border: 1px solid #dce7f3;
           border-radius: 20px;
-          box-shadow: var(--app-shadow);
+          background: rgba(255, 255, 255, 0.9);
+          box-shadow: 0 10px 24px rgba(48, 90, 138, 0.06);
           display: flex;
           flex-direction: column;
           align-items: flex-start;
           justify-content: center;
-          padding: 14px 14px 12px;
-          gap: 8px;
+          gap: 10px;
+          padding: 14px;
+          color: #163252;
           cursor: pointer;
+          text-align: left;
         }
 
         .today-shortcut__icon {
-          width: 36px;
-          height: 36px;
+          width: 34px;
+          height: 34px;
           border-radius: 12px;
+          background: #edf4fb;
+          color: #2d5f93;
           display: grid;
           place-items: center;
-          background: var(--app-primary-soft);
-          color: var(--app-primary);
           font-size: 16px;
           line-height: 1;
         }
 
         .today-shortcut__label {
-          font-size: 14px;
-          font-weight: 700;
-          color: var(--app-text);
+          font-size: 13px;
           line-height: 1.2;
+          font-weight: 800;
+        }
+
+        @media (max-width: 374px) {
+          .today-shortcuts {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .today-shortcut:last-child {
+            grid-column: 1 / -1;
+            min-height: 72px;
+          }
+
+          .today-pending-item {
+            grid-template-columns: 32px minmax(0, 1fr);
+          }
+
+          .today-inline-link {
+            grid-column: 2;
+            justify-self: start;
+          }
+
+          .today-upcoming-item {
+            grid-template-columns: 44px minmax(0, 1fr);
+          }
+
+          .today-upcoming-item .today-chip {
+            grid-column: 2;
+            justify-self: start;
+          }
+        }
+
+        @media (max-height: 700px) {
+          .today-content {
+            padding-top: 8px;
+          }
+
+          .today-header__name {
+            font-size: 26px;
+          }
+
+          .today-card__inner {
+            padding: 14px;
+          }
+
+          .today-hero__time {
+            font-size: 30px;
+          }
+
+          .today-hero__patient {
+            font-size: 20px;
+          }
+
+          .today-btn {
+            min-height: 44px;
+            font-size: 14px;
+          }
+
+          .today-pending-item,
+          .today-upcoming-item {
+            padding: 12px;
+          }
+
+          .today-shortcut {
+            min-height: 82px;
+          }
         }
       `}</style>
     </main>

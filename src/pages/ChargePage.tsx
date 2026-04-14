@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { chargeMockById, type ChargePaymentMethod } from "../mocks/charge.mock";
+import { resetTurnFlow } from "../mocks/turnFlow.mock";
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("es-AR", {
@@ -18,7 +19,8 @@ type PaymentLineState = {
 export default function ChargePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const charge = chargeMockById(params.id);
+  const turnId = params.id;
+  const charge = chargeMockById(turnId);
 
   const [products, setProducts] = useState(charge.availableProducts.slice(0, 1));
   const [paymentLines, setPaymentLines] = useState<PaymentLineState[]>(
@@ -85,6 +87,11 @@ export default function ChargePage() {
   const removePaymentLine = (id: string) => {
     if (paymentLines.length === 1) return;
     setPaymentLines((prev) => prev.filter((line) => line.id !== id));
+  };
+
+  const confirmCharge = () => {
+    resetTurnFlow(turnId);
+    navigate("/");
   };
 
   return (
@@ -308,7 +315,11 @@ export default function ChargePage() {
           Confirmá el cobro para cerrar esta atención.
         </p>
 
-        <button type="button" className="charge-btn charge-btn--primary">
+        <button
+          type="button"
+          className="charge-btn charge-btn--primary"
+          onClick={confirmCharge}
+        >
           Confirmar cobro
         </button>
 
