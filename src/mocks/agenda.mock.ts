@@ -8,6 +8,7 @@ export type AgendaAppointmentStatus =
 
 export type AgendaAppointment = {
   id: string;
+  patientId: string;
   time: string;
   patient: string;
   treatment: string;
@@ -39,6 +40,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
     appointments: [
       {
         id: "a3",
+        patientId: "p3",
         time: "09:30",
         patient: "Ana Ruiz",
         treatment: "Consulta control",
@@ -46,6 +48,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a4",
+        patientId: "p4",
         time: "11:00",
         patient: "Julia Sosa",
         treatment: "Botox frente",
@@ -53,6 +56,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a5",
+        patientId: "p5",
         time: "14:30",
         patient: "Micaela Ríos",
         treatment: "Láser vascular",
@@ -67,6 +71,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
     appointments: [
       {
         id: "a1",
+        patientId: "p1",
         time: "10:30",
         patient: "Carla Fernández",
         treatment: "Mesoterapia facial",
@@ -74,6 +79,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a2",
+        patientId: "p2",
         time: "11:15",
         patient: "Laura Pérez",
         treatment: "Peeling suave",
@@ -81,6 +87,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a3",
+        patientId: "p3",
         time: "12:00",
         patient: "Ana Ruiz",
         treatment: "Consulta control",
@@ -88,6 +95,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a4",
+        patientId: "p4",
         time: "13:30",
         patient: "Julia Sosa",
         treatment: "Botox frente",
@@ -95,6 +103,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a5",
+        patientId: "p5",
         time: "15:00",
         patient: "Micaela Ríos",
         treatment: "Láser vascular",
@@ -109,6 +118,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
     appointments: [
       {
         id: "a1",
+        patientId: "p1",
         time: "09:45",
         patient: "Carla Fernández",
         treatment: "Mesoterapia facial",
@@ -116,6 +126,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a2",
+        patientId: "p2",
         time: "11:00",
         patient: "Laura Pérez",
         treatment: "Peeling suave",
@@ -123,6 +134,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a3",
+        patientId: "p3",
         time: "12:30",
         patient: "Ana Ruiz",
         treatment: "Consulta control",
@@ -130,6 +142,7 @@ export const agendaByDate: Record<string, AgendaDayData> = {
       },
       {
         id: "a5",
+        patientId: "p5",
         time: "16:00",
         patient: "Micaela Ríos",
         treatment: "Láser vascular",

@@ -315,9 +315,9 @@ export default function AgendaPage() {
                 <button
                   type="button"
                   className={showOpenTurn ? "agenda-btn agenda-btn--secondary" : "agenda-btn agenda-btn--primary"}
-                  onClick={() => navigate(`/turno/${selected.id}`)}
+                  onClick={() => navigate(`/paciente/${selected.patientId}/historial`)}
                 >
-                  {showOpenTurn ? "Ficha" : "Ver ficha"}
+                  Historial
                 </button>
               </div>
             </div>
@@ -620,9 +620,11 @@ export default function AgendaPage() {
         }
 
         .agenda-row--selected {
-          border-color: #bfd4ea;
-          background: #f2f8fe;
-          box-shadow: 0 10px 22px rgba(55, 95, 145, 0.08);
+          border-color: #6e9ccc;
+          background: linear-gradient(180deg, #f4f9ff 0%, #ebf4fd 100%);
+          box-shadow: 0 12px 22px rgba(45, 95, 147, 0.13);
+          outline: 2px solid rgba(45, 95, 147, 0.12);
+          outline-offset: 0;
         }
 
         .agenda-row__time {

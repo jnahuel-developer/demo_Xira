@@ -3,6 +3,7 @@ import BottomNav from "../components/BottomNav";
 import AgendaPage from "../pages/AgendaPage";
 import ChargePage from "../pages/ChargePage";
 import ContractStubPage from "../pages/ContractStubPage";
+import PatientHistoryPage from "../pages/PatientHistoryPage";
 import PatientsPage from "../pages/PatientsPage";
 import TodayPage from "../pages/TodayPage";
 import TurnWorkspacePage from "../pages/TurnWorkspacePage";
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
           />
         ),
       },
+      { path: "paciente/:id/historial", element: <PatientHistoryPage /> },
       { path: "turno/:id", element: <TurnWorkspacePage /> },
       { path: "cobro/:id", element: <ChargePage /> },
     ],
