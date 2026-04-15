@@ -189,7 +189,7 @@ export default function AgendaPage() {
             type="button"
             className="agenda-icon-button"
             aria-label="Nuevo turno"
-            onClick={() => navigate("/agenda")}
+            onClick={() => navigate("/nuevo-turno")}
           >
             <span className="agenda-icon-button__icon">+</span>
           </button>
