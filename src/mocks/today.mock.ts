@@ -23,6 +23,7 @@ export type TodayMock = {
   clinicName: string;
   hero: {
     turnId: string;
+    patientId: string;
     time: string;
     patient: string;
     treatment: string;
@@ -38,6 +39,7 @@ export const todayMock: TodayMock = {
   clinicName: "Consultorio Martina López",
   hero: {
     turnId: "a1",
+    patientId: "p1",
     time: "10:30",
     patient: "Carla Fernández",
     treatment: "Mesoterapia facial",

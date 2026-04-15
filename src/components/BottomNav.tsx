@@ -28,7 +28,8 @@ const items: NavItem[] = [
     label: "Pacientes",
     icon: "⌕",
     path: "/pacientes",
-    isActive: (pathname) => pathname.startsWith("/pacientes"),
+    isActive: (pathname) =>
+      pathname.startsWith("/pacientes") || pathname.startsWith("/paciente/"),
   },
   {
     key: "more",

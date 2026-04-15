@@ -85,9 +85,11 @@ export default function TodayPage() {
                 <button
                   type="button"
                   className="today-btn today-btn--secondary"
-                  onClick={() => navigate(`/turno/${todayMock.hero.turnId}`)}
+                  onClick={() =>
+                    navigate(`/paciente/${todayMock.hero.patientId}/historial`)
+                  }
                 >
-                  Ver ficha
+                  Historial
                 </button>
               </div>
             </div>
