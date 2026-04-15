@@ -4,6 +4,7 @@ import AgendaPage from "../pages/AgendaPage";
 import AvailabilityPage from "../pages/AvailabilityPage";
 import ChargePage from "../pages/ChargePage";
 import ContractStubPage from "../pages/ContractStubPage";
+import EquipmentPage from "../pages/EquipmentPage";
 import MorePage from "../pages/MorePage";
 import PatientHistoryPage from "../pages/PatientHistoryPage";
 import PatientsPage from "../pages/PatientsPage";
@@ -76,10 +77,32 @@ export const router = createBrowserRouter([
       },
       {
         path: "equipos",
+        element: <EquipmentPage />,
+      },
+      {
+        path: "equipos/nuevo",
         element: (
           <ContractStubPage
-            title="Equipos"
-            targetPath="/equipos"
+            title="Nuevo equipo"
+            targetPath="/equipos/nuevo"
+          />
+        ),
+      },
+      {
+        path: "equipos/:id/editar",
+        element: (
+          <ContractStubPage
+            title="Editar equipo"
+            targetPath="/equipos/:id/editar"
+          />
+        ),
+      },
+      {
+        path: "equipos/:id/traslado",
+        element: (
+          <ContractStubPage
+            title="Traslado de equipo"
+            targetPath="/equipos/:id/traslado"
           />
         ),
       },
