@@ -7,6 +7,7 @@ import ContractStubPage from "../pages/ContractStubPage";
 import MorePage from "../pages/MorePage";
 import PatientHistoryPage from "../pages/PatientHistoryPage";
 import PatientsPage from "../pages/PatientsPage";
+import TreatmentsPage from "../pages/TreatmentsPage";
 import TodayPage from "../pages/TodayPage";
 import TurnWorkspacePage from "../pages/TurnWorkspacePage";
 
@@ -51,10 +52,23 @@ export const router = createBrowserRouter([
       },
       {
         path: "tratamientos",
+        element: <TreatmentsPage />,
+      },
+      {
+        path: "tratamientos/nuevo",
         element: (
           <ContractStubPage
-            title="Tratamientos"
-            targetPath="/tratamientos"
+            title="Nuevo tratamiento"
+            targetPath="/tratamientos/nuevo"
+          />
+        ),
+      },
+      {
+        path: "nuevo-tratamiento",
+        element: (
+          <ContractStubPage
+            title="Nuevo tratamiento"
+            targetPath="/nuevo-tratamiento"
           />
         ),
       },
@@ -109,6 +123,42 @@ export const router = createBrowserRouter([
           <ContractStubPage
             title="Editar paciente"
             targetPath="/paciente/:id/editar"
+          />
+        ),
+      },
+      {
+        path: "tratamientos/:id/editar",
+        element: (
+          <ContractStubPage
+            title="Editar tratamiento"
+            targetPath="/tratamientos/:id/editar"
+          />
+        ),
+      },
+      {
+        path: "tratamiento/:id/editar",
+        element: (
+          <ContractStubPage
+            title="Editar tratamiento"
+            targetPath="/tratamiento/:id/editar"
+          />
+        ),
+      },
+      {
+        path: "insumo/:id",
+        element: (
+          <ContractStubPage
+            title="Detalle de insumo"
+            targetPath="/insumo/:id"
+          />
+        ),
+      },
+      {
+        path: "certificacion/:id",
+        element: (
+          <ContractStubPage
+            title="Detalle de certificación"
+            targetPath="/certificacion/:id"
           />
         ),
       },
