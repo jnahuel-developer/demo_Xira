@@ -7,6 +7,8 @@ import ContractStubPage from "../pages/ContractStubPage";
 import MorePage from "../pages/MorePage";
 import PatientHistoryPage from "../pages/PatientHistoryPage";
 import PatientsPage from "../pages/PatientsPage";
+import ProductsPage from "../pages/ProductsPage";
+import SuppliesPage from "../pages/SuppliesPage";
 import TreatmentsPage from "../pages/TreatmentsPage";
 import TodayPage from "../pages/TodayPage";
 import TurnWorkspacePage from "../pages/TurnWorkspacePage";
@@ -83,19 +85,63 @@ export const router = createBrowserRouter([
       },
       {
         path: "insumos",
+        element: <SuppliesPage />,
+      },
+      {
+        path: "insumos/nuevo",
         element: (
           <ContractStubPage
-            title="Insumos"
-            targetPath="/insumos"
+            title="Nuevo insumo"
+            targetPath="/insumos/nuevo"
+          />
+        ),
+      },
+      {
+        path: "insumos/:id/editar",
+        element: (
+          <ContractStubPage
+            title="Editar insumo"
+            targetPath="/insumos/:id/editar"
+          />
+        ),
+      },
+      {
+        path: "insumos/:id/traslado",
+        element: (
+          <ContractStubPage
+            title="Traslado de insumo"
+            targetPath="/insumos/:id/traslado"
           />
         ),
       },
       {
         path: "productos",
+        element: <ProductsPage />,
+      },
+      {
+        path: "productos/nuevo",
         element: (
           <ContractStubPage
-            title="Productos"
-            targetPath="/productos"
+            title="Nuevo producto"
+            targetPath="/productos/nuevo"
+          />
+        ),
+      },
+      {
+        path: "productos/:id/editar",
+        element: (
+          <ContractStubPage
+            title="Editar producto"
+            targetPath="/productos/:id/editar"
+          />
+        ),
+      },
+      {
+        path: "productos/:id/traslado",
+        element: (
+          <ContractStubPage
+            title="Traslado de producto"
+            targetPath="/productos/:id/traslado"
           />
         ),
       },
