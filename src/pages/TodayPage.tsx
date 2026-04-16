@@ -1,7 +1,9 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  todayMock,
+  getTodayScreenMock,
+  resetTodaySimulation,
+  resolveTodayReceipt,
   type TodayPendingItem,
   type TodayAgendaStatus,
   type TodayHeroEvent,
@@ -140,17 +142,25 @@ function agendaStatusClass(status: TodayAgendaStatus) {
 
 export default function TodayPage() {
   const navigate = useNavigate();
-  const hero = useMemo(() => resolveHero(todayMock.heroEvents), []);
-  const [pendingItems, setPendingItems] = useState(todayMock.pendingItems);
+  const [todayData, setTodayData] = useState(() => getTodayScreenMock());
+  const hero = useMemo(() => resolveHero(todayData.heroEvents), [todayData.heroEvents]);
   const [activeView, setActiveView] = useState<TodayView>(
-    todayMock.pendingItems.length ? "pending" : "agenda"
+    todayData.pendingItems.length ? "pending" : "agenda"
   );
   const [activeReceiptItem, setActiveReceiptItem] = useState<TodayPendingItem | null>(null);
   const [confirmPermanentSkip, setConfirmPermanentSkip] = useState(false);
   const receiptInputRef = useRef<HTMLInputElement | null>(null);
 
-  const pendingCount = pendingItems.length;
+  const pendingCount = todayData.pendingItems.length;
   const canOpenHistory = Boolean(hero.patientId);
+
+  function refreshTodayData() {
+    const nextData = getTodayScreenMock();
+    setTodayData(nextData);
+    if (!nextData.pendingItems.length && activeView === "pending") {
+      setActiveView("agenda");
+    }
+  }
 
   function handlePendingAction(item: TodayPendingItem) {
     if (item.kind === "receipt") {
@@ -168,6 +178,21 @@ export default function TodayPage() {
 
       <section className="today-content">
         <header className="today-header">
+          <button
+            type="button"
+            className="today-reset-button"
+            onClick={() => {
+              resetTodaySimulation();
+              setActiveReceiptItem(null);
+              setConfirmPermanentSkip(false);
+              const nextData = getTodayScreenMock();
+              setTodayData(nextData);
+              setActiveView(nextData.pendingItems.length ? "pending" : "agenda");
+            }}
+          >
+            Reiniciar
+          </button>
+
           <div className="today-header__meta">
             {pendingCount ? (
               <span className="today-header__badge">{pendingCount} pendientes</span>
@@ -250,7 +275,7 @@ export default function TodayPage() {
 
               <div className="today-panel__scroll">
                 <div className="today-list">
-                  {pendingItems.length ? pendingItems.map((item) => (
+                  {todayData.pendingItems.length ? todayData.pendingItems.map((item) => (
                     <article key={item.id} className="today-list-item today-list-item--pending">
                       <div className="today-list-item__copy">
                         <p className="today-list-item__title">{item.title}</p>
@@ -300,7 +325,7 @@ export default function TodayPage() {
 
               <div className="today-panel__scroll">
                 <div className="today-list">
-                  {todayMock.agendaItems.slice(0, 4).map((item) => (
+                  {todayData.agendaItems.slice(0, 4).map((item) => (
                     <article
                       key={item.id}
                       className="today-list-item today-list-item--agenda"
@@ -384,9 +409,8 @@ export default function TodayPage() {
                 accept="image/*,.pdf"
                 className="today-modal__file-input"
                 onChange={() => {
-                  setPendingItems((current) =>
-                    current.filter((item) => item.id !== activeReceiptItem.id)
-                  );
+                  resolveTodayReceipt(activeReceiptItem.turnId);
+                  refreshTodayData();
                   setActiveReceiptItem(null);
                   setConfirmPermanentSkip(false);
                   if (receiptInputRef.current) {
@@ -419,9 +443,8 @@ export default function TodayPage() {
                   type="button"
                   className="today-modal__button today-modal__button--danger"
                   onClick={() => {
-                    setPendingItems((current) =>
-                      current.filter((item) => item.id !== activeReceiptItem.id)
-                    );
+                    resolveTodayReceipt(activeReceiptItem.turnId);
+                    refreshTodayData();
                     setActiveReceiptItem(null);
                     setConfirmPermanentSkip(false);
                   }}
@@ -476,13 +499,27 @@ export default function TodayPage() {
         .today-header {
           display: flex;
           align-items: center;
-          justify-content: flex-end;
+          justify-content: space-between;
           gap: 12px;
           padding-top: 2px;
         }
 
         .today-header__meta {
           min-width: 0;
+        }
+
+        .today-reset-button {
+          min-height: 34px;
+          padding: 0 12px;
+          border: 1px solid #d8e4f0;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.92);
+          color: #1f5d95;
+          font-size: 12px;
+          line-height: 1;
+          font-weight: 800;
+          cursor: pointer;
+          flex-shrink: 0;
         }
 
         .today-header__meta {

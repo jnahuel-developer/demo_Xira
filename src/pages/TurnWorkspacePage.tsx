@@ -7,6 +7,7 @@ import {
   type TurnFlowRuntime,
   type TurnFlowState,
 } from "../mocks/turnFlow.mock";
+import { syncTodayTurnFlow } from "../mocks/today.mock";
 
 type ModalKind = "public" | "private" | null;
 
@@ -189,6 +190,10 @@ function TurnWorkspacePageContent({ turnId }: { turnId: string }) {
       textareaRef.current.focus();
     }
   }, [modalKind]);
+
+  useEffect(() => {
+    syncTodayTurnFlow(turnId, flow.state);
+  }, [flow.state, turnId]);
 
   const hero = heroConfig(flow.state, flow.canCloseSession);
   const currentProgress = progressIndex(flow.state);
