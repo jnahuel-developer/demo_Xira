@@ -1,3 +1,5 @@
+import { turnMockById } from "./turn.mock";
+
 export type ChargePaymentMethod = "Efectivo" | "Transferencia" | "Posnet";
 
 export type ChargeProduct = {
@@ -110,5 +112,46 @@ const chargeMocks: Record<string, ChargeMock> = {
 
 export function chargeMockById(id?: string): ChargeMock {
   if (id && chargeMocks[id]) return chargeMocks[id];
+
+  if (id) {
+    const turn = turnMockById(id);
+
+    if (turn.id === id) {
+      const genericAmountByTurnId: Record<string, number> = {
+        a3: 120000,
+        a4: 135000,
+        a5: 180000,
+        a6: 90000,
+      };
+
+      const amount = genericAmountByTurnId[id] ?? 100000;
+
+      return {
+        id,
+        patient: turn.patient,
+        treatment: turn.treatment,
+        treatmentAmount: amount,
+        formattedTreatmentAmount: formatMoney(amount),
+        selectedProducts: [],
+        availableProducts: [
+          {
+            id: `${id}-p1`,
+            name: "Producto complementario",
+            price: 25000,
+            formattedPrice: formatMoney(25000),
+          },
+        ],
+        paymentLines: [
+          {
+            id: "l1",
+            method: "Efectivo",
+            amount: 0,
+            formattedAmount: formatMoney(0),
+          },
+        ],
+      };
+    }
+  }
+
   return chargeMocks.a1;
 }

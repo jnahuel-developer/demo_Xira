@@ -6,6 +6,7 @@ import {
   type ChargeProduct,
 } from "../mocks/charge.mock";
 import { resetTurnFlow } from "../mocks/turnFlow.mock";
+import { completeTodayCharge } from "../mocks/today.mock";
 
 const PAYMENT_METHODS: ChargePaymentMethod[] = [
   "Efectivo",
@@ -279,6 +280,33 @@ export default function ChargePage() {
   }
 
   function finalizeCharge() {
+    const positiveLines = paymentLines
+      .map((line) => ({
+        method: line.method,
+        amount: parseAmount(line.amount),
+      }))
+      .filter((line) => line.amount > 0);
+
+    const paymentBreakdown = positiveLines.length
+      ? positiveLines.map((line) => `${line.method} ${formatMoney(line.amount)}`).join(" · ")
+      : "Sin medios cargados";
+
+    const productsLabel = products.length
+      ? products
+          .map((product) =>
+            product.quantity > 1 ? `${product.name} x${product.quantity}` : product.name
+          )
+          .join(", ")
+      : undefined;
+
+    completeTodayCharge({
+      turnId,
+      totalLabel: formatMoney(total),
+      paymentBreakdown,
+      productsLabel,
+      hasTransfer: positiveLines.some((line) => line.method === "Transferencia"),
+    });
+
     resetTurnFlow(turnId);
     navigate("/");
   }

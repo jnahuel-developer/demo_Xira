@@ -1,3 +1,5 @@
+import { getTodayAgendaAppointments } from "./today.mock";
+
 export type AgendaAppointmentStatus =
   | "Próximo"
   | "Hechos"
@@ -222,6 +224,13 @@ function formatDateLabel(dateKey: string) {
 
 export function getAgendaDay(dateKey: string): AgendaDayData {
   const existing = agendaByDate[dateKey];
+
+  if (dateKey === agendaDateKeys.today && existing) {
+    return {
+      ...existing,
+      appointments: getTodayAgendaAppointments(),
+    };
+  }
 
   if (existing) {
     return existing;
