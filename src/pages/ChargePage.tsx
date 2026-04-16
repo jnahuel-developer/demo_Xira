@@ -141,9 +141,12 @@ export default function ChargePage() {
     };
   }, []);
 
-  const [products, setProducts] = useState<SelectedProduct[]>([
-    { ...charge.availableProducts[0], quantity: 1 },
-  ]);
+  const [products, setProducts] = useState<SelectedProduct[]>(
+    (charge.selectedProducts ?? []).map((product) => ({
+      ...product,
+      quantity: 1,
+    }))
+  );
   const [paymentLines, setPaymentLines] = useState<PaymentLineState[]>(
     charge.paymentLines.map((line) => ({
       id: line.id,

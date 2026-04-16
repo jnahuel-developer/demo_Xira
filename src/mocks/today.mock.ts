@@ -1,101 +1,162 @@
-export type TodayPendingKind = "consent" | "payment" | "session";
+export type TodayHeroState =
+  | "session_in_progress"
+  | "payment_pending"
+  | "ready_to_start"
+  | "upcoming_turn"
+  | "day_complete";
+
+export type TodayHeroEvent = {
+  id: string;
+  state: TodayHeroState;
+  turnId?: string;
+  patientId?: string;
+  patient?: string;
+  treatment?: string;
+  timeLabel: string;
+  statusLabel: string;
+  contextLine: string;
+};
+
+export type TodayPendingKind =
+  | "payment"
+  | "receipt"
+  | "consent"
+  | "waiting"
+  | "session";
 
 export type TodayPendingItem = {
   id: string;
-  title: string;
-  subtitle?: string;
-  action: string;
   kind: TodayPendingKind;
-  relatedId: string;
+  title: string;
+  reference: string;
+  subtitle: string;
+  actionLabel: string;
+  targetPath: string;
+  receiptDetails?: {
+    treatment: string;
+    sessionTime: string;
+    totalLabel: string;
+    paymentBreakdown: string;
+  };
 };
 
-export type TodayUpcomingItem = {
+export type TodayAgendaStatus =
+  | "Hechos"
+  | "Confirmado"
+  | "Por llegar"
+  | "Esperando"
+  | "Pendiente"
+  | "En curso";
+
+export type TodayAgendaItem = {
   id: string;
   time: string;
   patient: string;
   treatment: string;
-  status: "Confirmado" | "Por llegar" | "Esperando";
-  relatedId: string;
+  status: TodayAgendaStatus;
+  targetPath: string;
 };
 
 export type TodayMock = {
   doctorName: string;
   clinicName: string;
-  hero: {
-    turnId: string;
-    patientId: string;
-    time: string;
-    patient: string;
-    treatment: string;
-    statusLabel: string;
-    lastSessionLabel: string;
-  };
+  heroEvents: TodayHeroEvent[];
   pendingItems: TodayPendingItem[];
-  upcomingItems: TodayUpcomingItem[];
+  agendaItems: TodayAgendaItem[];
 };
 
 export const todayMock: TodayMock = {
-  doctorName: "Dra. Martina López",
-  clinicName: "Consultorio Martina López",
-  hero: {
-    turnId: "a1",
-    patientId: "p1",
-    time: "10:30",
-    patient: "Carla Fernández",
-    treatment: "Mesoterapia facial",
-    statusLabel: "En 18 min",
-    lastSessionLabel: "Última sesión hace 28 días",
-  },
-  pendingItems: [
+  doctorName: "Brenda Mansilla",
+  clinicName: "Consultorio Melendez",
+  heroEvents: [
     {
-      id: "p1",
-      title: "Consentimiento pendiente",
-      subtitle: "Carla Fernández",
-      action: "Resolver",
-      kind: "consent",
-      relatedId: "a1",
+      id: "hero-payment-a2",
+      state: "payment_pending",
+      turnId: "a2",
+      patientId: "p2",
+      patient: "Laura Pérez",
+      treatment: "Full face con bioestimulador",
+      timeLabel: "10:00",
+      statusLabel: "Cobro pendiente",
+      contextLine: "Sesión recién cerrada · $250.000 por cobrar",
     },
     {
-      id: "p2",
-      title: "Cobro pendiente",
-      subtitle: "Laura Pérez",
-      action: "Cobrar",
-      kind: "payment",
-      relatedId: "a2",
+      id: "hero-upcoming-a3",
+      state: "upcoming_turn",
+      turnId: "a3",
+      patientId: "p3",
+      patient: "Ana Ruiz",
+      treatment: "Control con radiofrecuencia",
+      timeLabel: "11:00",
+      statusLabel: "Próximo turno",
+      contextLine: "Sigue después del cobro actual",
     },
     {
-      id: "p3",
-      title: "Turno sin cerrar",
-      subtitle: "Ayer 18:40",
-      action: "Cerrar",
-      kind: "session",
-      relatedId: "a5",
+      id: "hero-empty",
+      state: "day_complete",
+      timeLabel: "Hoy",
+      statusLabel: "Sin turnos",
+      contextLine: "No quedan turnos por atender",
     },
   ],
-  upcomingItems: [
+  pendingItems: [
     {
-      id: "u1",
-      time: "11:15",
-      patient: "Laura Pérez",
-      treatment: "Peeling suave",
-      status: "Confirmado",
-      relatedId: "a2",
+      id: "pending-payment-a2",
+      kind: "payment",
+      title: "Cobro pendiente",
+      reference: "Laura Pérez",
+      subtitle: "10:00 · Full face con bioestimulador · $250.000",
+      actionLabel: "Ir al cobro",
+      targetPath: "/cobro/a2",
     },
     {
-      id: "u2",
-      time: "12:00",
+      id: "pending-receipt-a1",
+      kind: "receipt",
+      title: "Comprobante pendiente",
+      reference: "Carla Fernández",
+      subtitle: "09:00 · transferencia de $90.000 sin comprobante",
+      actionLabel: "Ver cobro",
+      targetPath: "/cobro/a1",
+      receiptDetails: {
+        treatment: "Bioestimulación facial + protector solar clínico",
+        sessionTime: "09:00",
+        totalLabel: "$140.000",
+        paymentBreakdown: "Efectivo $50.000 · Transferencia $90.000",
+      },
+    },
+  ],
+  agendaItems: [
+    {
+      id: "agenda-a3",
+      time: "11:00",
       patient: "Ana Ruiz",
-      treatment: "Consulta control",
+      treatment: "Control con radiofrecuencia",
       status: "Confirmado",
-      relatedId: "a3",
+      targetPath: "/turno/a3",
     },
     {
-      id: "u3",
-      time: "13:30",
+      id: "agenda-a4",
+      time: "12:00",
       patient: "Julia Sosa",
-      treatment: "Botox frente",
-      status: "Por llegar",
-      relatedId: "a4",
+      treatment: "Peeling despigmentante",
+      status: "Confirmado",
+      targetPath: "/turno/a4",
+    },
+    {
+      id: "agenda-a5",
+      time: "14:00",
+      patient: "Micaela Ríos",
+      treatment: "Láser vascular",
+      status: "Pendiente",
+      targetPath: "/turno/a5",
+    },
+    {
+      id: "agenda-a6",
+      time: "16:00",
+      patient: "Marina López",
+      treatment: "Control de relleno",
+      status: "Confirmado",
+      targetPath: "/turno/a6",
     },
   ],
 };

@@ -23,6 +23,8 @@ function statusClass(status: AgendaAppointmentStatus) {
   switch (status) {
     case "Próximo":
       return "agenda-chip agenda-chip--primary";
+    case "Hechos":
+      return "agenda-chip agenda-chip--done";
     case "Confirmado":
       return "agenda-chip agenda-chip--success";
     case "Esperando":
@@ -249,6 +251,8 @@ export default function AgendaPage() {
                       key={`${selectedDate}-${item.id}-${item.time}`}
                       type="button"
                       className={`agenda-row ${
+                        item.status === "Hechos" ? "agenda-row--done" : ""
+                      } ${
                         isSelected ? "agenda-row--selected" : ""
                       }`.trim()}
                       aria-pressed={isSelected}
@@ -627,6 +631,17 @@ export default function AgendaPage() {
           outline-offset: 0;
         }
 
+        .agenda-row--done {
+          background: linear-gradient(180deg, #f3f6f9 0%, #edf2f6 100%);
+          border-color: #d7e0e9;
+        }
+
+        .agenda-row--done .agenda-row__time,
+        .agenda-row--done .agenda-row__patient,
+        .agenda-row--done .agenda-row__treatment {
+          color: #76899d;
+        }
+
         .agenda-row__time {
           font-size: 18px;
           line-height: 1;
@@ -681,6 +696,11 @@ export default function AgendaPage() {
         .agenda-chip--success {
           background: #edf7f2;
           color: #2d7b53;
+        }
+
+        .agenda-chip--done {
+          background: #edf1f5;
+          color: #6a7d92;
         }
 
         .agenda-chip--warning {

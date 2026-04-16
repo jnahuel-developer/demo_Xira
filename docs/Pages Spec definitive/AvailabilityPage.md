@@ -139,7 +139,7 @@ Este bloque debe mostrar:
 ### Ejemplo
 ```txt
 Centro actual
-Consultorio Martina López
+Consultorio Melendez
 ```
 
 ## 7.3. Comportamiento en médico independiente
