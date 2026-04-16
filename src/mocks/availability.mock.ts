@@ -31,7 +31,7 @@ export const weekdayLabels: Record<WeekdayKey, string> = {
 };
 
 export const availabilityMock: AvailabilityScreenMock = {
-  centerName: "Consultorio Martina López",
+  centerName: "Consultorio Melendez",
   weeklySchedule: {
     mon: [
       { id: "mon-1", start: "09:00", end: "13:00" },
