@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>xira-prototype</title>
+    <script>
+      (function () {
+        const redirectUrl =
+          window.location.pathname +
+          window.location.search +
+          window.location.hash;
+
+        window.sessionStorage.setItem("gh-pages-path", redirectUrl);
+        window.location.replace(`${window.location.origin}/demo_Xira/`);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

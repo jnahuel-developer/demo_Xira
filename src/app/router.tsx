@@ -14,6 +14,11 @@ import TreatmentsPage from "../pages/TreatmentsPage";
 import TodayPage from "../pages/TodayPage";
 import TurnWorkspacePage from "../pages/TurnWorkspacePage";
 
+const basename =
+  import.meta.env.BASE_URL === "/"
+    ? undefined
+    : import.meta.env.BASE_URL.replace(/\/$/, "");
+
 function MobileLayout() {
   return (
     <div className="app-shell">
@@ -236,4 +241,4 @@ export const router = createBrowserRouter([
       { path: "cobro/:id", element: <ChargePage /> },
     ],
   },
-]);
+], { basename });

@@ -8,6 +8,27 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        const redirectKey = "gh-pages-path";
+        const redirectUrl = window.sessionStorage.getItem(redirectKey);
+
+        if (!redirectUrl) {
+          return;
+        }
+
+        window.sessionStorage.removeItem(redirectKey);
+
+        const currentUrl =
+          window.location.pathname +
+          window.location.search +
+          window.location.hash;
+
+        if (redirectUrl !== currentUrl) {
+          window.history.replaceState(null, "", redirectUrl);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
